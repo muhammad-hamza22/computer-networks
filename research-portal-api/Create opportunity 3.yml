@@ -1,0 +1,29 @@
+info:
+  name: Create opportunity 3
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://localhost:3000/api/opportunities
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Smart Traffic Management with IoT",
+        "description": "Design an IoT-based system that adapts traffic signals to real-time congestion.",
+        "research_area": "Internet of Things",
+        "faculty_name": "Dr. Usman Raza",
+        "department": "Electrical Engineering",
+        "required_skills": "Embedded Systems, Python",
+        "positions": 1,
+        "deadline": "2026-12-15"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

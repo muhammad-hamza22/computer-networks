@@ -1,0 +1,29 @@
+info:
+  name: Create opportunity 2
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:3000/api/opportunities
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Network Security Using Machine Learning",
+        "description": "Detect intrusion attempts in network traffic using ML classifiers.",
+        "research_area": "Cybersecurity",
+        "faculty_name": "Dr. Sara Ahmed",
+        "department": "Computer Science",
+        "required_skills": "Python, Networking Basics",
+        "positions": 3,
+        "deadline": "2026-11-30"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

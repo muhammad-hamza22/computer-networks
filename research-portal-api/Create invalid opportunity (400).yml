@@ -1,0 +1,29 @@
+info:
+  name: Create invalid opportunity (400)
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: http://localhost:3000/api/opportunities
+  body:
+    type: json
+    data: |-
+      {
+        "title": "",
+        "description": "This request has deliberately bad data.",
+        "research_area": "Artificial Intelligence",
+        "department": "Computer Science",
+        "required_skills": "Python",
+        "positions": 0,
+        "deadline": "31-12-2026",
+        "status": "Pending"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

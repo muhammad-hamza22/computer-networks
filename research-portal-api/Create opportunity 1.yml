@@ -1,0 +1,29 @@
+info:
+  name: Create opportunity 1
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:3000/api/opportunities
+  body:
+    type: json
+    data: |-
+      {
+        "title": "AI for Healthcare Diagnosis",
+        "description": "Build machine learning models to detect diseases from medical images.",
+        "research_area": "Artificial Intelligence",
+        "faculty_name": "Dr. Ali Khan",
+        "department": "Computer Science",
+        "required_skills": "Python, Machine Learning",
+        "positions": 2,
+        "deadline": "2026-12-31"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

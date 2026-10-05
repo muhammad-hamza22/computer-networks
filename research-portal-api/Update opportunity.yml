@@ -1,0 +1,25 @@
+info:
+  name: Update opportunity
+  type: http
+  seq: 6
+
+http:
+  method: PUT
+  url: http://localhost:3000/api/opportunities/1
+  body:
+    type: json
+    data: |-
+      {
+        "title": "AI for Healthcare Diagnosis (Updated)",
+        "required_skills": "Python, Machine Learning, Deep Learning",
+        "positions": 4,
+        "deadline": "2027-01-15"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
