@@ -26,6 +26,14 @@
   #message.success { display: block; background: #e6f4ea; color: #1e6b34; }
   .detail-row { margin: 10px 0; }
   .detail-row b { display: inline-block; min-width: 170px; color: #1f4e78; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 14px; }
+  .field input, .field textarea, .field select {
+    width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #bbb;
+    border-radius: 6px; font-size: 14px; font-family: inherit; }
+  .field input.invalid, .field textarea.invalid { border-color: #c0392b; background: #fff6f5; }
+  .field .err { color: #c0392b; font-size: 12px; margin-top: 2px; min-height: 14px; }
+  .toolbar { margin-bottom: 14px; }
 </style>
 </head>
 <body>
@@ -34,8 +42,36 @@
   <div id="message"></div>
 
   <div id="listView">
+    <div class="toolbar"><button onclick="showForm()">+ New opportunity</button></div>
     <h2>All Opportunities</h2>
     <div id="list"></div>
+  </div>
+
+  <div id="formView" style="display:none">
+    <div class="card">
+      <h2 id="formTitle">New opportunity</h2>
+      <input type="hidden" id="f_id">
+      <div class="field"><label for="f_title">Research title *</label>
+        <input id="f_title" type="text"><div class="err" id="e_title"></div></div>
+      <div class="field"><label for="f_description">Research description *</label>
+        <textarea id="f_description" rows="3"></textarea><div class="err" id="e_description"></div></div>
+      <div class="field"><label for="f_research_area">Research area *</label>
+        <input id="f_research_area" type="text"><div class="err" id="e_research_area"></div></div>
+      <div class="field"><label for="f_faculty_name">Faculty member's name *</label>
+        <input id="f_faculty_name" type="text"><div class="err" id="e_faculty_name"></div></div>
+      <div class="field"><label for="f_department">Department *</label>
+        <input id="f_department" type="text"><div class="err" id="e_department"></div></div>
+      <div class="field"><label for="f_required_skills">Required skills *</label>
+        <input id="f_required_skills" type="text"><div class="err" id="e_required_skills"></div></div>
+      <div class="field"><label for="f_positions">Number of available positions *</label>
+        <input id="f_positions" type="number" min="1"><div class="err" id="e_positions"></div></div>
+      <div class="field"><label for="f_deadline">Application deadline *</label>
+        <input id="f_deadline" type="date"><div class="err" id="e_deadline"></div></div>
+      <div class="field"><label for="f_status">Status</label>
+        <select id="f_status"><option value="Open">Open</option><option value="Closed">Closed</option></select></div>
+      <button onclick="saveOpportunity()">Save</button>
+      <button class="secondary" onclick="backToList()">Cancel</button>
+    </div>
   </div>
 
   <div id="detailView" style="display:none"></div>
@@ -43,6 +79,8 @@
 
 <script>
 const API = 'http://localhost:3000/api/opportunities';
+const FIELDS = ['title', 'description', 'research_area', 'faculty_name',
+                'department', 'required_skills', 'positions', 'deadline'];
 
 function showMessage(text, type) {
   const box = document.getElementById('message');
@@ -62,6 +100,12 @@ function esc(s) {
   return d.innerHTML;
 }
 
+function show(viewId) {
+  ['listView', 'formView', 'detailView'].forEach(id => {
+    document.getElementById(id).style.display = (id === viewId) ? 'block' : 'none';
+  });
+}
+
 async function loadOpportunities() {
   const list = document.getElementById('list');
   try {
@@ -78,6 +122,9 @@ async function loadOpportunities() {
         <p class="meta">${esc(o.faculty_name)} · ${esc(o.department)}</p>
         <p class="meta">Area: ${esc(o.research_area)} · Positions: ${esc(String(o.positions))} · Deadline: ${esc(o.deadline)}</p>
         <button onclick="viewDetails(${Number(o.id)})">View details</button>
+        <button class="secondary" onclick="editOpportunity(${Number(o.id)})">Edit</button>
+        ${o.status === 'Open' ? `<button class="secondary" onclick="closeOpportunity(${Number(o.id)})">Close</button>` : ''}
+        <button style="background:#c0392b" onclick="deleteOpportunity(${Number(o.id)})">Delete</button>
       </div>`).join('');
   } catch (err) {
     showMessage('Could not load opportunities. Is the backend running?', 'error');
@@ -106,8 +153,7 @@ async function viewDetails(id) {
         <div class="detail-row"><b>Application deadline:</b> ${esc(o.deadline)}</div>
         <button class="secondary" onclick="backToList()">Back to list</button>
       </div>`;
-    document.getElementById('listView').style.display = 'none';
-    document.getElementById('detailView').style.display = 'block';
+    show('detailView');
   } catch (err) {
     showMessage('Could not reach the backend. Is it running?', 'error');
   }
@@ -115,9 +161,139 @@ async function viewDetails(id) {
 
 function backToList() {
   clearMessage();
-  document.getElementById('detailView').style.display = 'none';
-  document.getElementById('listView').style.display = 'block';
+  show('listView');
   loadOpportunities();
+}
+
+function clearFieldErrors() {
+  FIELDS.forEach(f => {
+    document.getElementById('e_' + f).textContent = '';
+    document.getElementById('f_' + f).classList.remove('invalid');
+  });
+}
+
+function showForm() {
+  clearMessage();
+  clearFieldErrors();
+  document.getElementById('formTitle').textContent = 'New opportunity';
+  document.getElementById('f_id').value = '';
+  FIELDS.forEach(f => { document.getElementById('f_' + f).value = ''; });
+  document.getElementById('f_status').value = 'Open';
+  show('formView');
+}
+
+function validateForm() {
+  clearFieldErrors();
+  let ok = true;
+  function fail(field, text) {
+    document.getElementById('e_' + field).textContent = text;
+    document.getElementById('f_' + field).classList.add('invalid');
+    ok = false;
+  }
+  ['title', 'description', 'research_area', 'faculty_name', 'department', 'required_skills']
+    .forEach(f => {
+      if (!document.getElementById('f_' + f).value.trim()) fail(f, 'This field is required');
+    });
+  const pos = Number(document.getElementById('f_positions').value);
+  if (!Number.isInteger(pos) || pos < 1) fail('positions', 'Enter a whole number of 1 or more');
+  if (!document.getElementById('f_deadline').value) fail('deadline', 'Please choose a deadline');
+  return ok;
+}
+
+async function saveOpportunity() {
+  clearMessage();
+  if (!validateForm()) {
+    showMessage('Please fix the highlighted fields.', 'error');
+    return;
+  }
+  const id = document.getElementById('f_id').value;
+  const body = {
+    title: document.getElementById('f_title').value.trim(),
+    description: document.getElementById('f_description').value.trim(),
+    research_area: document.getElementById('f_research_area').value.trim(),
+    faculty_name: document.getElementById('f_faculty_name').value.trim(),
+    department: document.getElementById('f_department').value.trim(),
+    required_skills: document.getElementById('f_required_skills').value.trim(),
+    positions: Number(document.getElementById('f_positions').value),
+    deadline: document.getElementById('f_deadline').value,
+    status: document.getElementById('f_status').value
+  };
+  try {
+    const res = await fetch(id ? `${API}/${id}` : API, {
+      method: id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const more = data.details ? ': ' + data.details.join(', ') : '';
+      showMessage((data.error || 'Request failed') + more, 'error');
+      return;
+    }
+    show('listView');
+    await loadOpportunities();
+    showMessage(id ? 'Opportunity updated successfully.' : 'Opportunity created successfully.', 'success');
+  } catch (err) {
+    showMessage('Could not reach the backend. Is it running?', 'error');
+  }
+}
+
+async function editOpportunity(id) {
+  clearMessage();
+  clearFieldErrors();
+  try {
+    const res = await fetch(`${API}/${id}`);
+    const o = await res.json();
+    if (!res.ok) {
+      showMessage(o.error || 'Could not load the opportunity', 'error');
+      return;
+    }
+    document.getElementById('formTitle').textContent = 'Edit opportunity #' + o.id;
+    document.getElementById('f_id').value = o.id;
+    FIELDS.forEach(f => { document.getElementById('f_' + f).value = o[f]; });
+    document.getElementById('f_status').value = o.status;
+    show('formView');
+  } catch (err) {
+    showMessage('Could not reach the backend. Is it running?', 'error');
+  }
+}
+
+async function closeOpportunity(id) {
+  clearMessage();
+  if (!confirm('Close this opportunity? Students will no longer see it as open.')) return;
+  try {
+    const res = await fetch(`${API}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'Closed' })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showMessage(data.error || 'Could not close the opportunity', 'error');
+      return;
+    }
+    await loadOpportunities();
+    showMessage('Opportunity closed successfully.', 'success');
+  } catch (err) {
+    showMessage('Could not reach the backend. Is it running?', 'error');
+  }
+}
+
+async function deleteOpportunity(id) {
+  clearMessage();
+  if (!confirm('Delete this opportunity permanently? This cannot be undone.')) return;
+  try {
+    const res = await fetch(`${API}/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) {
+      showMessage(data.error || 'Could not delete the opportunity', 'error');
+      return;
+    }
+    await loadOpportunities();
+    showMessage(data.message || 'Opportunity deleted successfully.', 'success');
+  } catch (err) {
+    showMessage('Could not reach the backend. Is it running?', 'error');
+  }
 }
 
 loadOpportunities();
